@@ -13,20 +13,22 @@ import de.csw.cl.importer.MainForMaven;
 
 /**
  * Represents and manages a catalog for common logic files. In this catalog
- * the imports of a common logic document (also transitiv) will be mapped
- * to the local file names of the import files.
+ * the includes of a common logic document (also transitive closure) will be mapped
+ * to the local file names of the inclued files.
+ * In importation resolution, resolvable imports are transformed to includes
  */
 public class Catalog {
 
 	/**
-	 * The list of the currently existing imports. It contains originally
-	 * existing imports and the added imports.
+	 * The list of the currently existing includes. It contains originally
+	 * existing includes and includes added as the result of importation resolution.
+	 * All includes in the Ontomaven namespace are the result of importation resolution.
 	 */
 	List<Import> existingImports;
 
 	/**
-	 * Main consturctor of the catalog. Creates a empty list of
-	 * import declarations
+	 * Main constructor of the catalog. Creates a empty list of
+	 * include declarations
 	 */
 	public Catalog() {
 		existingImports = new LinkedList<Import>();

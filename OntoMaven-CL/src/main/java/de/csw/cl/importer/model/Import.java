@@ -13,11 +13,11 @@ import de.csw.cl.importer.ContentLoader;
 import de.csw.cl.importer.Main;
 
 /**
- * Represents a import declaration in common logic. 
+ * Represents a resolvable import declaration in a Common Logic corpus. 
  */
 public class Import {
-	private String newURL;
-	private String dowloadURL;
+	private String newURL; // The URL that will be registered in the Catalog.
+	private String downloadURL; //
 	private String fileName;
 	private Element originalXMLElement;
 	private boolean isRestrictImport;
@@ -35,7 +35,7 @@ public class Import {
 		this.fragment = fragment;
 		this.originalXMLElement = originalXMLElement;
 		this.newURL = newURL;
-		this.dowloadURL = downloadURL;
+		this.downloadURL = downloadURL;
 		this.isRestrictImport = isRestrictImport;
 
 		Document xmlDocument = null;
@@ -93,7 +93,7 @@ public class Import {
 	
 	/** Returns the url, from which the document will be loaded. */
 	public String getDownloadURL(){
-		return dowloadURL;
+		return downloadURL;
 	}
 
 	/** Returns if this is a restrict import */
@@ -115,21 +115,21 @@ public class Import {
 	}
 
 	/**
-	 * Solves this import by loading the file and doing these things if
-	 * necessary: saving the document, adding the to the catalog, replacing
+	 * Resolves this import by loading the file and doing these things if
+	 * necessary: saving the document, adding it to the catalog, replacing
 	 * the import element with an include element, and filtering the parts
-	 * of an document, if only one part of it should be imported
+	 * of a document, if only one part of it should be imported
 	 */
 	public void solve() {
 		System.out.println();
 		System.out.println("-------------------------------------------------- ");
-		System.out.println("- Solving import: " + originalURL);
+		System.out.println("- Resolving import: " + originalURL);
 		System.out.println("-------------------------------------------------- ");
 
 		// Loading the document to import.
 		Document loadedDocument = null;
 		try {
-			loadedDocument = XMLUtil.readDocFromURL(new URL(dowloadURL));
+			loadedDocument = XMLUtil.readDocFromURL(new URL(downloadURL));
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -147,7 +147,7 @@ public class Import {
 
 		// Removing the parts (construct, titling etc) which should not be
 		// imported. This is necessary if the URI has a fragment. Only the part
-		// of the document, whose name is equalent to the original URI with
+		// of the document, whose name is equivalent to the original URI with
 		// the fragment
 		if (!fragment.equals("")) {
 			for (Element part : loadedRoot.getChildren()) {

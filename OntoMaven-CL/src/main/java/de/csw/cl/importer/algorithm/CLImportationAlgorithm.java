@@ -39,7 +39,7 @@ public class CLImportationAlgorithm {
 
     private enum ELEMENT_TYPE {Titling, Restrict, Import, Construct, include, other}
 	
-	private File baseDir;
+	private File inputDir;
 	
 	private Corpus corpus;
 	
@@ -62,7 +62,7 @@ public class CLImportationAlgorithm {
 
 		// TODO weiterer Parameter schema URL
 		
-		baseDir = corpusDirectory;
+		inputDir = corpusDirectory;
 		
 	}
 	
@@ -77,7 +77,7 @@ public class CLImportationAlgorithm {
 	public void run(File resultDir) throws ConflictingTitlingException, FolderCreationException, MissingCatalogEntryException, MissingIncludeEntryException {
 
 		try {
-		    corpus = new Corpus(baseDir);
+		    corpus = new Corpus(inputDir);
 		} catch (ConflictingTitlingException e) {
 		    LOG.error(e);
 			throw e;

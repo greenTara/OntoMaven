@@ -20,6 +20,8 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.output.XMLOutputter;
 import org.junit.BeforeClass;
@@ -38,6 +40,8 @@ import de.csw.cl.importer.model.ConflictingTitlingException;
  */
 @RunWith(value = Parameterized.class)
 public class ClImportTest extends TestCase {
+    
+    static Logger logger = Logger.getLogger(ClImportTest.class);
 	
 	private static File testBaseDir;
 	private static File expectedResultBaseDir;
@@ -108,6 +112,8 @@ public class ClImportTest extends TestCase {
 	 */
 	@Test
 	public void testAll() {
+	    BasicConfigurator.configure();
+	    
 		File testCaseDir = new File(testBaseDir, caseDirName); // the directory for this test case ("<baseDir>/caseX")
 		File testInputDir = new File(testCaseDir, "input"); // the directory containing the input corpus ("<baseDir>/caseX/input")
 		File testResultDir = new File(testCaseDir, "test-result"); // the directory containing the expected output ("<expectedResultBaseDir>/caseX/test-result")
@@ -119,6 +125,12 @@ public class ClImportTest extends TestCase {
 		if(caseDirName.equals("caseF")) {
 			expectedResultDir = new File(new File(expectedResultBaseDir, (caseDirName)), "result2");
 		}
+        if(caseDirName.equals("caseR")) {
+            expectedResultDir = new File(new File(expectedResultBaseDir, (caseDirName)), "result2");
+        }
+        if(caseDirName.equals("caseS")) {
+            expectedResultDir = new File(new File(expectedResultBaseDir, (caseDirName)), "result2");
+        }
 
 		// delete stale files in test-result dir from previous runs
 		
@@ -154,27 +166,27 @@ public class ClImportTest extends TestCase {
 
 		
 		
-		// run algorithm on folder and fail if an inexpected exception is caught
+		// run algorithm on folder and fail if an unexpected exception is caught
 			
 		CLImportationAlgorithm algo = new CLImportationAlgorithm(testInputDir);
 		
 		try {
 			algo.run(testResultDir);
 			if (expectedThrowable != null ) {
-				System.err.println("Exception of type " + expectedThrowable.getCanonicalName() + " expected, but none has been thrown.");
+			    logger.error("Exception of type " + expectedThrowable.getCanonicalName() + " expected, but none has been thrown.");
 				fail("Exception of type " + expectedThrowable.getCanonicalName() + " expected, but none has been thrown.");
 			}
 		} catch (ConflictingTitlingException e) {
 			if (expectedThrowable != null && expectedThrowable.isAssignableFrom(ConflictingTitlingException.class)) {
-				System.out.println("Conflicting titlings (same name, different content) have been detected as expected: "
+			    logger.info("Conflicting titlings (same name, different content) have been detected as expected: "
 								+ e.getName() + ".");
 			} else {
-				System.err.println("Unexpected conflicting titlings with name " + e.getName());
+				logger.error("Unexpected conflicting titlings with name " + e.getName());
 				fail("Unexpected conflicting titlings with name " + e.getName());
 			}
 		} catch (Throwable t) {
 			if (expectedThrowable == null || !expectedThrowable.isAssignableFrom(t.getClass())) {
-				System.err.println("Unexpected exception : " + t.getMessage());
+				logger.error("Unexpected exception : " + t.getMessage());
 				t.printStackTrace();
 				fail("Unexpected exception : " + t.getMessage());
 			}

@@ -1,0 +1,767 @@
+
+\documentclass{IOS-Book-Article}
+
+\usepackage{mathptmx}
+\usepackage{url}
+\usepackage{cite}
+\usepackage{clrscode}
+
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fixltx2e}
+
+\newcommand{\corp}{ \mathcal{C} }
+\newcommand{\corphat}{ \hat{\mathcal{C}} }
+\newcommand{\texts}{ \mathcal{T} }
+\newcommand{\lan}{ \mathcal{L} }
+\newcommand{\sentstate}{ \mathcal{S} }
+\newcommand{\ttl}{\mathit{ttl}}
+\newcommand{\txt}{\mathit{txt}}
+\newcommand{\Formal}{\mathcal{F}}
+\newcommand{\Core}{\mathcal{K}}
+\newcommand{\Canon}{\mathit{Can}}
+\newcommand{\TV}{\mathit{TV}}
+\newcommand{\Sub}{\mathit{Sub}}
+\newcommand{\Struc}{\mathit{Struc}}
+\newcommand{\Clo}{\mathit{Clo}}
+\newcommand{\propz}{\mathit{prop0}}
+\newcommand{\prop}{\mathit{prop}}
+\newcommand{\impz}{\mathit{imp0}}
+\newcommand{\imp}{\mathit{imp}}
+\newcommand{\res}{\mathit{res}}
+\newcommand{\elem}{\mathit{elem}}
+\newcommand{\true}{\mathrm{true}}
+\newcommand{\domOp}[1]{\mathrm{Q}_{#1}}
+\newcommand{\domain}[2]{\mathrm{domain}(\text{$#1$, $#2$})}
+\newcommand{\txtOp}{\mathrm{X}}
+\newcommand{\txtOpone}[1]{\txtOp(#1)}
+\newcommand{\txtOptwo}[2]{\txtOp(\text{$#1$, $#2$})}
+\newcommand{\txtOpthree}[3]{\txtOp(\text{$#1$, $#2$, $#3$})}
+\newcommand{\textOpthree}[3]{\mathrm{txt}(\text{$#1$, $#2$, $#3$})}
+\newcommand{\ttlOp}[2]{\mathrm{L}(\text{$#1$, $#2$})}
+\newcommand{\ttlFun}[2]{\mathrm{ttl}(\text{$#1$, $#2$})}
+\newcommand{\titleFun}[2]{\mathrm{title}(\text{$#1$, $#2$})}
+\newcommand{\impOp}[1]{\mathrm{M}_{#1}}
+\newcommand{\import}[1]{\mathrm{import}({#1})}
+\newcommand{\entail}{\models}
+\newcommand{\notentail}{\models}
+\newcommand{\algo}{\mathcal{R}}
+\newcommand{\algopow}[1]{\algo^{#1}}
+\newcommand{\algoone}[1]{\algo(#1)}
+\newcommand{\algopowone}[2]{\algopow{#1}(#2)}
+\def\defeq{\mathrel{\mathop:}=}
+
+\usepackage{turnstile}
+\newcommand{\mdpf}{\ensuremath{\sdtstile[ss]{}{}}}
+\newcommand{\smdpf}{\ensuremath{\ddtstile[ss]{}{}}}
+%\newcommand{\Sat}[2]{\mathit{Sat}(\text{$#1$, $#2$})}
+\newcommand{\Sat}[2]{{#1}\smdpf{#2}}
+\newcommand{\mdpfEquiv}{\ensuremath{\ndststile[ss]{\hspace*{3 pt }}{}\hspace*{3 pt}\sdtstile[ss]{}{}}}
+
+\newcommand{\mdpfstruct}{\ensuremath{\sdtstile[ss]{}{st}}}
+
+\newcommand{\mdpfstructEquiv}{\ensuremath{\ndststile[ss]{\hspace*{3 pt }}{}\hspace*{3 pt}\sdtstile[ss]{}{st}}}
+
+\usepackage{cancel}
+\DeclareMathOperator*{\nmdpf}{\cancel{\mdpf}}
+\DeclareMathOperator*{\nmdpfstruct}{\cancel{\mdpfstruct}}
+
+\newcommand{\mycomment}[1]{}
+
+%\usepackage{times}
+%\normalfont
+%\usepackage[T1]{fontenc}
+%\usepackage[mtplusscr,mtbold]{mathtime}
+%
+\begin{document}
+\newtheorem{theo}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\begin{frontmatter}              % The preamble begins here.
+
+%\pretitle{Pretitle}
+\title{Common Logic Importation Resolution Implemented in OntoMaven}
+\runningtitle{CL2 Importation in OntoMaven}
+%\subtitle{Subtitle}
+
+\author[A]{\fnms{Ralph} \snm{Schaefermeier}},%
+\author[B]{\fnms{Tara} \snm{Athan}
+\thanks{Corresponding Author: Tara Athan, Athan Services, athant.com, 334 Hollowood Dr, W Lafayette, IN USA; E-mail:taraathan@gmail.com.}}
+and
+\author[A]{\fnms{Adrian} \snm{Paschke}
+\thanks{Corresponding Author: Adrian Paschke; AG Corporate Semantic Web, Freie Universitaet Berlin.}}
+\runningauthor{R. Schaefermeier et al.}
+\address[A]{Freie Universitaet Berlin, Germany} and
+\address[B]{Athan Services, USA}.
+
+\begin{abstract}
+% shortly describe the problem
+This paper describes the OntoMaven implementation of a resolution algorithm for importation in the ISO Common Logic (Edition 2) language. OntoMaven is a plug-in based extension of the Apache Maven software build tool for the development and reuse of knowledge base (KB) artifacts, such as ontologies and rule bases, managed in distributed (Web) repositories, such as Github and Subversion. The OntoMaven CL2 import plug-in contributes a proof-of-concept implementation of the CL2 importation semantics which deals with the problem of circular imports.
+\end{abstract}
+
+\begin{keyword}
+Common Logic\sep importation\sep
+OntoMaven\sep circular importation\sep domain restriction
+\end{keyword}
+\end{frontmatter}
+
+\thispagestyle{empty}
+\pagestyle{empty}
+
+\section*{Introduction}
+\label{intro}
+% Background on Common Logic
+% Describe the CL ISO Standard
+The ISO Common Logic (CL) Standard\cite{CL2007} was published in 2007, with a syntax that includes syntactic categories called \emph{named text}, \emph{imports} and \emph{module} which were intended to allow distributed publishing of CL texts.
+% Describe the CL2 Revision Status
+Some technical issues were discovered\cite{horatio2012} in the CL Standard semantics, particularly in regard to modules, 
+prompting commencement of a revision of the CL Standard\footnote{\url{http://ontolog.cim3.net/cgi-bin/wiki.pl?CommonLogic_V2}}.
+A proposal has been developed\cite{AthanNeuhaus} to revise the abstract syntax and semantics in order to 
+resolve these issues, and at the time of publication of this paper, 
+an Initial Submission\cite{CDv2} (CL2) has been presented that adopts this proposal. 
+Relative to the CL Standard, CL2 takes a significantly different approach to distributed publishing of texts.
+The goal of this paper is to demonstrate an implementation of importation resolution of distributed CL2 texts.
+
+% Define Functional syntax
+In this paper, we will make use of an abbreviated functional notation for the structural aspects of the CL2 syntax, defined in terms of the normative CL2 functional syntax as follows:
+\begin{itemize}
+\item $\ttlFun{N}{\Gamma}\defeq \titleFun{N}{\Gamma}$ is a $N$ titling with content $\Gamma$.
+\item $\txtOpthree{E_1}{\ldots}{E_n} \defeq \textOpthree{E_1}{\ldots}{E_n}$ is a text construction with arguments $E_i$, which may be texts, statements or sentences.
+\item $\domOp{N}(\Gamma)\defeq\domain{N}{\Gamma}$ is a domain restriction with domain name $N$ applied to a text $\Gamma$.
+\item $\impOp{N}\defeq \import{N}$ is an importation of the title $N$.
+\end{itemize}
+
+\noindent We also make use of composition notation and some shortcuts:
+\begin{itemize}
+\item $\ttlOp{N}{\Gamma} \defeq \txtOpone{\ttlFun{N}{\Gamma}}$ is a titling text.
+\item $\bot$ is a canonical unsatisfiable text, e.g. a text construction whose argument is the empty disjunction; $\Gamma$ is unsatisfiable iff $\Gamma\mdpf\bot$.
+\item $A \circ B(\Gamma) \defeq A(B(\Gamma))$
+\item $\domOp{\text{$\langle N_1$,$\ldots$, $N_m \rangle$}} \defeq \domOp{N_1} \circ \ldots \circ \domOp{N_m}$
+\item $\domOp{S} \defeq \domOp{\text{$\langle N_1$,$\ldots$, $N_m \rangle$}}$, where $S=\{ N_1$,$\ldots$, $N_m \}$ with $N_j<N_{j+1}$.
+\end{itemize}
+In the last item, WLOG we make use of some total ordering, e.g. lexicographic, on the countable vocabulary $V$.
+
+% Corpus
+As defined in the CL2 Standard, the entailment relation ($\mdpf$) holds fundamentally between corpora - sets of texts; however, it is left unspecified how a corpus is to be delineated in practice.
+In this proof-of-concept implementation, we use the file system as our mechanism for corpus delineation - 
+a corpus is the set of XCL2 documents in a directory. 
+
+
+% Summarize the CL2 importation semantics in the Initial Submission
+%% Titling Semantics
+Instead of named texts, CL2 has \textbf{titlings}, $\ttlFun{N}{\Gamma}$.
+The content $\Gamma$ is not considered to be asserted unless it is imported, and the semantics of the assertions \emph{is} affected by any domain restrictions that are applied to that importation, so that in general $\domOp{S}(\impOp{N}) \nmdpf \domOp{S'}(\impOp{N})$ for $S\neq S'$.
+Expressions that occur within some titling are called \textbf{inaccessible}; otherwise, they are \textbf{accessible}. 
+% Relationship to Web
+Unlike OWL and RDF, Common Logic is not
+closely tied to the physical structure of the Web or its standards and conventions.
+In particular, in titling $\ttlFun{N}{\Gamma}$ it is \emph{not} assumed that $N$ is an IRI. If $N$ is an IRI, it is \emph{not} assumed that $\Gamma$ may be dereferenced from that IRI.
+Here, we assume that titles are IRIs;
+however, our methods could be easily extended to the general case.
+
+%% Importation
+%A CL2 \textbf{importation} --$\impOp{N}$-- is a text with a name argument $N$ (the imported title). 
+%There is no syntactic requirement for the presence of an $N$ titling, but an $N$ importation will only affect entailments when that is the case.
+%% Circular Importations
+CL2 importations are allowed to be circular; e.g., the content of a titling may import itself, e.g. $\ttlOp{N}{\impOp{N}}$, 
+and the content of a pair of titlings may import each other,
+e.g. $\txtOptwo{\ttlOp{N}{\impOp{M}}}{\ttlOp{M}{\impOp{N}}}$.
+Because of this, the revised CL2 semantics employs a fixed point approach to define the semantics of importations (see the Appendix).
+%% Importation into Domain Restriction
+%CL2 importations may be nested within another syntactic category, called \textbf{domain restriction}, which has arguments of a name $N$ (the domain) and a text $\Gamma$ (the restricted text) -- in functional notation, $\domOp{N}(\Gamma)$.
+
+%% Significance for Importation Resolution
+A common strategy for handling circular importations in other languages, e.g. in OWL, is to ignore repetitions.
+However, since CL2 importation within a domain restriction may change the semantics of the imported text, 
+\mycomment{so an importation inside of a domain restriction is not redundant, from a logical perspective, 
+relative to an importation outside of the domain restriction, 
+or within a different domain restriction.
+Therefore,}
+more complex criteria must be satisfied in order to avoid circularity.
+%% and the termination criterion is ??? cross=ref to approach or implementation section?
+
+Our resolution of CL2 importation iteratively applies a semantics-preserving transformation $\algo$
+to a corpus $\corp$ to obtain a sequence $\corp_n = \algopowone{n}{\corp}$, $n=$0, 1, $\ldots$, terminating when a fixed point ($\corp_m = \corp_{m+1}$) is reached or inconsistent titlings (different texts assigned to the same title, e.g. $X(\text{$\ttlOp{N}{\Gamma}$, $\ttlOp{N}{\Gamma'}$})$) are found (in which case, $\corp \mdpf \bot$).
+%In particular, the importation resolution terminates when for any remaining accessible $N$ importations (if any) there is no accessible $N$ titling, .
+
+% Serialization
+In the CL Standard, as well as its revision CL2, multiple dialects (serializations) are presented.
+%One of these is CLIF, a LISP-style syntax similar to KIF. Another is XCL, an XML-based syntax. 
+%Both dialects are revised for CL2 - the revised XCL syntax will be called XCL2 here. 
+In our implementation, we handle only the XML-based syntax XCL2, although this approach
+% Relevance for other dialects.
+%The implementation of importation resolution we demonstrate here 
+could be applied to CLIF2 or other CL2 dialects through translations based on their shared abstract syntax.
+The XML-based syntax of XCL2 allows us to take advantage of the many standards, and implementations thereof, available for manipulating XML. 
+In particular, canonical XML\footnote{http://www.w3.org/TR/xml-c14n2/} is employed to compare XCL2 texts for syntactic equivalence.
+Before determining the canonical XML form, syntactic elements that are external to the CL2 abstract syntax, such as key attributes for element labels, and XML comments, are removed. CURIEs are resolved according to their prefix declarations, and the optional \texttt{symbol} element is made explicit in all \texttt{Name} and \texttt{Data} elements.
+
+
+\section{Approach}
+\label{approach}
+The contribution of this paper is the proof-of-concept implementation of the OntoMaven\footnote{\url{https://github.com/ag-csw/OntoMaven/tree/master/OntoMaven-CL}} CL2 import plug-in with a resolution algorithm that handles circular importations. 
+
+OntoMaven \cite{Paschke13a, Paschke13b, Paschke13c} extends the Apache Maven software project management tool \footnote{\url{http://maven.apache.org/}} and adapts it for knowledge base (KB) project management. 
+OntoMaven dynamically downloads KB artifacts (ontologies, rule bases, semantic data resources, etc.) and plug-ins for ontology/rule engineering from distributed OntoMaven repositories and manages them in a local development cache for further reuse and development. 
+OntoMaven repositories are extensions of Maven repositories (supporting e.g. Github, Subversion and folder-based document management systems) with ontology versioning and maintenance metadata for the build life cycle management of KB artifacts. 
+
+Like Maven, OntoMaven is also based around the central concept of a build lifecycle which is made up of build phases representing certain stages in the development life cycle.  
+It therefore extends an OntoMaven declarative XML-based POM (Project Object Model) to describe a KB project being build, its dependencies on required external KB artifacts and components which are published in distributed repositories, the build order, and the required plug-ins which implement and execute the goals defined for each project build phase. 
+A goal represents a specific task which contributes to the build and management of an OntoMaven KB project. 
+OntoMaven is using Maven's extensible plug-in architecture for implementing predefined goals which are performing certain well-defined tasks in different build phases, such as import and dependency management of KB artifacts from distributed repositories, versioning with semantic difference computation, automated documentation and testing, and deployment etc. 
+The focus of this section is on the CL2 import plug-in  which implements an importation resolution algorithm.
+
+\subsection{Algorithm}
+
+The importation resolution algorithm iteratively transforms a given corpus of CL2 texts into a logically-equivalent corpus by resolving each accessible $N$ importation provided there is a unique accessible $N$ titling. 
+%During the process, inaccessible importations and titlings  may become accessible through importation, so the set of accessible titlings is updated repeatedly.
+
+The following code listing illustrates the initialization of the algorithm:
+
+\begin{codebox}
+\Procname{$\proc{CL2-Corpus}(Docs, Catalog, Includes)$}
+\li $\proc{Init}(Docs)$
+\li $T \gets$ Empty Map
+\li \For each document $d$ in $Docs$
+\li \Do $\proc{Identify-Available-Titlings}(d.root, T)$
+\End %for
+\zi
+\li $\proc{Identify-Available-Titlings}(e, T)$ \label{li:corpus}
+\li \If $e$ is Titling
+\li     \Then \If $T$ contains key $e$.name
+\li         \Then \If $e$.content $= T$.get($e$.name)
+\li             \Then return
+\li             \Else Conflicting Titling Error
+\End     %if 
+\li         \Else $T$.add($e$.name, $e$.content ) \label{li:titling_add}
+\End   %if
+\li return
+\End %if
+\li \If $e$ is Include
+\li     \Then
+\li         $i \gets$ \id{Includes}.get(\id{Catalog}.get($e$.href))
+\li         $\proc{Identify-Available-Titlings}(i, T)$
+\li return
+\End %if
+\li \For each node $c$ in $e$.children
+\li   \Do  \If $c$ is Restrict or Construct
+\li     \Then  $\proc{Identify-Available-Titlings}(c, T)$
+\End %if
+\End %for
+\end{codebox}
+
+The import resolution algorithm is initialized with a set of XCL2 documents $Docs$ which constitute the text corpus. The documents are contained in a data structure \id{CL2-Corpus}, which reflects the state of the corpus during the transformation process. 
+
+The documents of the corpus may contain XInclude directives, either created by an earlier application of the importation resolution algorithm, inserted manually, or created by some other application. To assist in following these include directives, the corpus data structure also contains an XML Catalog $Catalog$ and an $Includes$ map. The $Catalog$ is a map from the IRIs referenced by the XInclude directives to the local paths of any cached copies of the included texts. When the corpus is loaded, the locally-cached includes are loaded into memory in the $Includes$ map, using their local path as the key, and uncached includes are downloaded from their remote locations, if possible, and added to the $Catalog$ and $Includes$ maps as well. Failure to obtain an included text causes an Exception to be thrown.
+
+Titlings initially accessible are collected into a set $T$ by traversing the node tree of each document $d$, starting from the root element \id{d.root}, until the first \texttt{Titling} element in the subtree is encountered. Nodes other than the text elements Restrict and Construct also terminate their subtree recursion. Duplicate titlings are ignored, while inconsistent titlings
+%, i.e., titlings with different content but the same title 
+lead to an error message and the premature termination of the importation process. 
+
+Resolution of available imports is accomplished by traversing the structural elements (root and text elements) of each document in the corpus (XInclude directive encountered in this traversal are followed) and substituting each accessible importation occurrence with the content of a titling for the imported title, if such a titling is accessible anywhere in the corpus. Substitution in this context means that the titling content is copied into an external document, and a reference to the external files is established by inserting an XML include (XInclude) directive in place of the CL2 importation. 
+
+\begin{codebox}
+\li $\proc{Process-Imports}(T)$
+\li \While resolvable accessible importations exist
+\li     \Do \For each document $d$ in $Docs$
+\li         \Do
+\li         $R \gets$ Empty Stack
+\li         $\proc{Process-Import}(d.root, R, T)$
+\End %for
+\End %while
+\end{codebox}
+
+In order to avoid duplicate importations, which could produce non-terminating loops, whenever an importation is resolved with an XInclude directive, its generated URI (described below) is added to $Catalog$ prior to entry into a recursion over the subtree of the imported text. If the generated URI for the current \texttt{Import} element is found in $Catalog$, a duplicate importation has been detected, and an empty text construction is inserted in place of the \texttt{Import} element.
+
+\begin{codebox}
+\li $\proc{Process-Import}(e, R, T)$
+%\li \If $e$ is Titling
+%\li \Then return
+%\End %if
+\li \If $e$ is Import
+\li \Then
+\li     $includeURI \gets$ \proc{generate-include-uri}($e$.name, $R$) \label{li:call_generate-include-uri}
+\li     \If \id{Catalog} contains $includeURI$
+\li     \Then Duplicate import detected, remove $e$
+\li     \Else
+\li         \If $T$ contains key $e$.name
+\li         \Then
+\li             $i \gets $ new xml \texttt{include} element
+\li             $i$.href $\gets includeURI$
+\li             replace $e$ with $i$
+\li             $newtext \gets$ clone of $T$.get($e$.name)
+\li             $localURI \gets$ a local path for caching $newtext$
+\li             \id{Catalog}.add($includeURI$, $localURI$)
+\li             \id{Includes}.add($localURI$, $newtext$)
+\li             $\proc{Identify-Available-Titlings}(newtext, T)$
+\li             $\proc{Process-Import}(newtext, R, T)$
+\End %if
+\End %if
+\li     return
+\End %if
+\li \If $e$ is Include
+\li \Then
+\li   $i \gets$ \id{Includes}.get($Catalog$.get($e$.href))
+\li   $\proc{Process-Import}(i, R, T)$
+\li   return
+\End %if
+\li \If $e$ is Restrict
+\li \Then $R$.push($e$.name)
+\End
+\li \If $e$ is Restrict or Construct or Root
+\li \Then 
+\li    \For each node $c$ in $e$.children
+\li    \Do $\proc{Process-Import}(c, R, T)$
+\End
+\End
+\li \If $e$ is Restrict
+\li \Then $R$.pop()
+\End
+\end{codebox}
+
+If a \texttt{Titling} element is encountered, there is no need to continue the recursion in the current branch, since all importations encountered in the content would be titled.
+
+Each \texttt{Import} element, after checking for duplicates, is replaced with an \texttt{include} element, while the content of the imported titling is added to an \id{Includes} structure, which is in turn part of the \id{CL2-Corpus} structure and stores all imported titled texts. 
+
+\texttt{Include} elements may refer to texts that contain importations or nested titlings which have become accessible due to their importation. Therefore, the text referenced by the include is retrieved from the \id{Includes} structure and the recursion continues in the content of the included text, after newly available titlings are added to $T$.
+
+The XML Catalogs standard\footnote{\url{https://www.oasis-open.org/committees/download.php/14809/xml-catalogs.html}} is used to later allow to resolve the identifier of the included resource to their physical location on disk. 
+%This also allows for identifying importations of the same text under different or no domain restrictions without physical duplication of the text by mapping different identifiers to the same physical resource.
+
+When an \texttt{Include} element is encountered directly in subtree recursion, the included text is retrieved from the \id{Includes} structure and the recursion continues in the included text.
+
+The history of domain restrictions is traced using a stack $R$. For each entry into a restricted context (within a Restricts element) the domain of the restriction is pushed onto the stack and deleted upon leaving the restricted context.
+
+The scheme for constructing the system identifiers for the included resources is implemented in the procedure \id{generate-include-uri}, which is called from line \ref{li:call_generate-include-uri} in the \id{Process-Import} procedure.
+
+\begin{codebox}
+\zi \Procname{\proc{generate-include-uri}(n, R)}
+\li \id{uri} $\gets$ "http://ontomaven.org?uri=" + \proc{urlEncode}(n)
+\li \id{R_{normalized}} $\gets$ $R$ sorted alphabetically, without duplicates \label{li:restriction_normalization}
+\li \For $i \gets 1$ \To $R$.length
+\li \Do
+\li     \id{uri} $\gets$ \id{uri} + ";dom" + $i$ + "=" + \proc{urlEncode}(\id{R_{normalized}}[i])
+\End
+\li \Return \id{uri}
+\end{codebox}
+
+As pointed out in the Appendix, the order of nestings of domain restrictions  has no effect on the semantics of the resulting text, and it is sufficient to ensure that every arbitrary sequence of domain restrictions under which an importation is processed is recognized as the same domain restriction, as long as the members of the sequence are the same, regardless of their order or duplications. To achieve this, it is sufficient to sort the domains of the nested domain restrictions in alphabetical order and purge duplicates (line \ref{li:restriction_normalization}).
+
+The system identifier for a resource that contains a text resulting from resolution of an importation of titled text with the title \url{http://example.org/myText-A1#a} (without domain restrictions) would be \url{http://ontomaven.org?uri=http\%3A\%2F\%2Fexample.org\%2FmyText-A1\%23a}.
+
+The system identifier for the same text imported both under the nested domain restrictions \url{http://example.org/myDomain-N1} and \url{http://example.org/myDomain-N2}, as well as under the nested domain restrictions \url{http://example.org/myDomain-N2}, \url{http://example.org/myDomain-N1} would be \url{http://ontomaven.org?uri=http\%3A\%2F\%2Fexample.org\%2FmyText-N1\%23a;dom1=http\%3A\%2F\%2Fexample.org\%2FmyDomain-N1;dom2=http\%3A\%2F\%2Fexample.org\%2FmyDomain-N2}.
+
+Determination of equivalent titlings is accomplished on the syntactical level by following these steps:
+
+\begin{itemize}
+\item resolution of all CURIES and removal of prefix declarations
+\item stripping out of XML comments and processing instructions
+\item removal of @key attributes
+\item making the symbol edge explicit in non-IRI Names and \texttt{Data} elements.
+\item transformation to canonical XML form
+\end{itemize}
+%The same steps are taken in order to determine the physical identifier of the file resource for physical storage of the included texts, using a hash code over the normalized XML representation, thus eliminating duplicate storage of identical includes.
+
+\subsection{Integration into OntoMaven}
+
+The CL2 importation algorithm has been incorporated in a plug-in to the Maven build management system and complements the OntoMaven suite, which provides support for lifecycle management of OWL ontolgies and related artifacts in the form of importation, semantic versioning \cite{Luczak-RoschCPRT10}, automated entailment unit testing, consistency checking, aspect-oriented modularization \cite{schafermeier:2014aa}, and documentation generation, in conjunction with automated dependency resolution and build support provided by Maven.
+
+Such tasks are referred to as \emph{goals} in Maven terminology, and the CL2 importation task has been implemented in the form of such a Maven goal. The invocation and parametrization of Maven goals, as well as the rest of the build cycle, is controlled in a declarative way, using xml-based POM (Project Object Model) descriptors.
+
+The CLImport goal accepts the two parameters \emph{basedir} and \emph{resultdir}, with \emph{basedir} being the parent directory of the orignal CL2 corpus and \emph{resultdir} the destination directory for the corpus with after importation closure resolution.
+ 
+\begin{verbatim}
+<build>
+  <plugins>
+    <plugin>
+      <groupId>de.csw.OntoMaven</groupId>
+      <artifactId>CL2-Import</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <configuration>
+        <basedir>src/resource/cl/cl-texts</basedir>
+        <resultdir>target/ontologies/cl</resultdir>
+      </configuration>
+      <executions>
+       <execution>
+        <goals>
+          <goal>CLImport</goal>
+        </goals>
+        </execution>
+      </executions>	
+    </plugin>
+  </plugins>
+</build>
+\end{verbatim}
+
+\mycomment{% Discussion of correctness is moved to the Appendix
+\section{Discussion}
+\label{discussion}
+
+%% Theory
+In Athan\cite{Athan2013} a class of languages was studied that includes CL2 as a special case. There it was shown constructively that if a \textbf{corpus} (a set of texts) is \textbf{self-contained}, it has a finite cover - a finite corpus that is logically equivalent to the original corpus and has no accessible importations. The determination of finite covers was demonstrated constructively through semantics-preserving transformations appropriate for that general class of languages.
+
+%% Semantics-preserving transformations
+We adopt a similar approach here. Semantics-preserving transformations are applied to the input corpus until one of the termination criteria is met.
+%either no accessible importations remain, the remaining titled importations may not be further resolved or inconsistent titling are encountered. 
+The semantics-preserving transformations that we employ are
+based on the properties of importations, titlings, domain restrictions, text construction operators and corpora as defined by CL2 semantics.
+
+%% CL2 Interpretation Structure
+To understand why the transformations we employ are semantics-preserving, it is only necessary to understand a few aspects of the CL2 semantics. The component of a CL2 interpretation $I$ that is of primary concern to us is the title mapping, $ttl_I$ which maps names into CL2 texts (i.e. texts in the sense of the CL2 abstract syntax).
+%% Titling Semantics
+A CL2 titling $I(\ttlFun{N}{\Gamma} = \true$ iff  $G = ttl_I(N)$. 
+\footnote{The individual mapping $int_I$ which determines the denotation of names in the arguments of relations and functions is independent of the titling mapping.}
+
+%% Domain Restriction Semantics
+Domain restrictions modify the interpretation of some sentences, statements and texts inside them; 
+%in particular, only quantifications, discourse statements, and nested domain restrictions are directly affected.
+e.g., while quantifications outside of a domain restriction allow their bindings to assume any value from the domain of discourse, 
+a quantification inside a domain restriction allows only values from the specified subdomain.
+
+%% Text Construction is Conjunctive
+In CL2 semantics, the text construction operator is \emph{conjunctive} - $I(\txtOp(E_1,\ldots,E_n) = \wedge_i I(E_i)$.
+This property allows us to flatten, merge and decompose text constructions, as well as to distribute domain restrictions over the text construction arguments, so that the text construction operator may be ignored for practical purposes.
+
+%% Corpora are Conjunctive
+Further, a CL2 corpus is satisfied by an interpretation $I$ iff every text in the corpus is satisfed by $I$. This allows us to consider assertions within a corpus, including titlings, independent of the member text in which they occur.
+
+%% Replacement
+The main transformation used for importation resolution is substituting the content of an accessible $N$ titling in place of an occurrence of an accessible $N$ importation, provided the $N$ titling is unique. The semantics-preserving character of this transformation arises from the CL2 definition of importation closure (see the Appendix) based on (incremental) substitution.
+However, in the case of circular importations, such substitution would continue indefinitely; therefore, we have developed a criterion whereby the substituting text may be an empty text construction, while still preserving semantics.
+
+%% Criterion for Ignoring Importation
+Our criterion for deleting accessible importations is derived from the conditions under which an importation embedded within zero to many nested domain restrictions is logically equivalent to another such importation.
+Within nested CL2 domain restrictions, the scope of quantification is the intersection of the domains.
+Therefore, it is the set of domains that determines the semantics of restricted quantifications - 
+there is no dependence on the order in which the restrictions are nested nor is there any effect of duplication of a domain restriction. 
+Hence, duplicates of importations of the same text into the same \emph{set} of domain restrictions may be deleted (while still preserving semantics), keeping only one.  
+The deletion of duplicates is the second way that importations in a corpus are reduced in our implementation.
+
+% Missing Titling
+Another case that may arise in CL2 is accessible $N$ importation but no accessible $N$ titling. 
+If this happens before import processing is complete, the needed titling may be introduced into the corpus by a later transformation.
+For this reason, multiple passes must be made over the corpus until no further transformations can be applied. 
+If the import processing terminates with some importations unresolved, this situation is harmless in CL2 semantics because the logic is monotonic.
+The entailments of the corpus are just those determined by the assertions other than the unresolved importations.
+Therefore, the implementation of importation resolution does not fail in the case of a missing titling, although users may appreciate a warning message.
+The unresolved importation is retained in the output corpus in case of later merger with another corpus that defines the missing titling.
+
+%% Inconsistency
+Finally, a corpus may contain accessible titlings that assign the same title to different texts, leading to inconsistency.
+CL2 semantics allows us to accept variations in the concrete syntax of such titlings, as long as the abstract syntactic form
+of the titled texts is identical (including CL2 comments).
+Technically speaking, a titling inconsistency means the corpus is logically equivalent to a corpus containing only a contradiction (e.g. an empty disjunction).
+However in practice, it typically means a mistake has been made, so premature termination with an error message is appropriate.
+
+The results of \cite{Athan2013} guarantee that termination of one of these three kinds will occur after a finite number of steps. 
+}
+
+\section{Related Work}
+\label{related}
+
+In software engineering circular dependencies between imports of software artifacts are widely considered as problematic. Several solutions on how to find and avoid circular dependencies have been proposed, including \cite{Laval:2009, Sangal:2005, Melton:2007, Vainsencher:2004}. Tools with built-in support dependencies are e.g., Lattix\footnote{\url{http://lattix.com/}} and JDepend\footnote{\url{http://clarkware.com/software/JDepend.html}}.
+
+The halting problem of cyclic imports is also closely related to infinite loops in recursion, as it occurs e.g. in several backward-reasoning resolution algorithms such as SLDNF. Much work has been done in this field to define restriction properties (on the dependency graph whose vertices are the predicate symbols from a logic program) for which SLDNF then is complete, such as e.g. stratification. Other approaches use alternating fixpoint semantics to capture the negation of positive existential closure (e.g. for transitive closure), such as the constructive characterization of the well-founded semantics for normal logic programs in terms of alternating fixpoint partial models \cite{VanGelder:1989}, as well as negation of positive universal closure with alternating fixpoint semantics for general logic programs (negation in the conclusion) \cite{VanGelder:1991}.
+
+The general problem of cycle detection also occurs in graphs and several algorithms have been proposed such as Floyd's cycle-finding algorithm or Brents's algorithm.
+
+From the perspective of modular ontologies or knowledge bases, it has been recognised since at least the 90's\cite{farquhar1997tools} that
+circular dependencies may be considred a desirable feature rather than a problem to be avoided. Circular importations are acceptable in OWL\footnote{\url{http://www.w3.org/TR/owl2-syntax/#Imports}}. CL2 titlings have similarities to named graphs in RDF 1.1\footnote{\url{http://www.w3.org/TR/2014/REC-rdf11-concepts-20140225/#section-dataset}}, 
+in that RDF names (IRIs or blank nodes) can perform a dual role of denoting entities in the universe of reference and independently naming graphs.
+However, the CL2 approach to titling differs from that of RDF 1.1 in that RDF Datasets, expressions which create the associations between names and graphs, 
+ are not given a model-theoretic semantics, while the CL2 titlings are integrated into the model-theoretic semantics.
+
+
+The Common Logic community has chosen to embrace
+circular importations and semantics-altering importations into domain restrictions, together with the difficulties in implementation that 
+arise from their interaction. The implementation presented here differs from previous approaches to circular dependencies due to the special requirements
+imposed on the resolution by importation within domain restriction, as well as the properties provide by the CL2 semantics that permit termination of the importation cycles.
+
+\section{Conclusion}
+The presented research follows a software engineering-oriented research methodology grounded in Design Science research. It contributes with a new practical design artifact, the OntoMaven CL2 plug-in, being a proof-of-concept implementation for the rigorous ISO Common Logic (Edition 2) importation resolution which solves the relevant problem of loops in cyclic CL2 imports. 
+Future work will include
+\begin{itemize}
+\item integration of importation resolution with a mechanism to assemble a corpus from the IRIs of texts published on the internet (e.g. an XML configuration file, or a DOL\cite{DOL2012} expression);
+\item extension to handle non-IRI titles;
+\item extension to other CL2 dialects;
+\item  complexity analysis and optimization of performance (e.g. by tracking of the paths and restriction history of unresolved importations for use during the recursive resolution);
+\item profiling for applications that use CL2 importations.
+\end{itemize}
+
+The first point is already partly addressed by Maven's dependency resolution mechanism but is only applicable under the precondition that the external texts are published as Maven artefacts in Maven repositories.
+Future work will be focused on a generalization of this approach in order to cover cases where the external texts are published as general web resources.
+
+\appendix
+\section{Appendix}
+\label{appendix}
+The correctness of the importation resolution algorithm presented above depends on the corpus $\corp_{n}$ at the $n$-th step of the importation resolution process being logically equivalent to the original corpus $\corp_0$ for all $n$. This may be proved from two theorems: Th. \ref{replace} shows that substituting the content of an accessible $N$ titling in place of an occurrence of an accessible $N$ importation is a semantics-preserving transformation. Th. \ref{resolve} shows that each step of the importation resolution algorithm is semantics-preserving.
+The termination of the importation resolution algorithm, proved in Th. \ref{termination}, depends on the achievement of a fixed point after a finite number of steps.
+
+From \cite{CDv2}, we obtain the following definitions. An \textbf{importation fixed-point} under a title mapping $\ttl$ (a mapping from names to texts) is a corpus $\corp$ such that if $\Gamma$ is a text in $\corp$ then $\corp$ contains every text $\Gamma'$ derived from $\Gamma$ by substituting $\ttl(N)$ in place of one occurrence of an accessible $N$ importation. 
+The \textbf{importation closure} of a corpus $\corp$ under a title mapping $\ttl$ is the intersection of all importation fixed-points under $\ttl$ that contain $\corp$.
+
+%We assume a CL2 language $\lan$  with a countable vocabulary $V$ of names that implements domain restriction, text construction, and importation, and has some set $\sentstate$ of sentences and statements.  
+Let $\texts$ be the set of texts in some CL2 language $\lan$ with vocabulary $V$. 
+For the purposes of our proofs, we adopt a simpler semantics  than \cite{CDv2}, which we call the structural semantics of $\lan$ based on \cite{Athan2013}.
+We define a \textbf{structural pre-interpretation} $I$ of $\lan$  to be a mathematical structure that has a title mapping $\ttl_I$ from names in $V$ to texts in $\texts$, and assigns a Boolean truth value $\TV_I(\Gamma)$ to all texts in $\texts$.
+
+\mycomment{subject to the following constraints.
+Importations are always true, and text constructions with only texts as arguments are true if all their arguments are true.
+Titlings are true if they are in agreement with the title mapping, and application of a domain restriction to a titling or importation preserves its truth value.
+The truth value of domain restrictions applied to a text construction with only text arguments is true iff the domain restriction of each argument is true. 
+The assignment of truth values to a domain restriction applied to unary text constructions, domain restrictions or importations is restricted only in that the truth value of a set of domain restrictions applied to a given text is independent of the order of application and multiplicity of application of the domain restrictions, as well as the appearance of intervening text construction operators.}
+
+A CL2 corpus $\corp$ is satisfied by a structural pre-interpretation $I$ (denoted $\Sat{I}{\corp}$) if and only if $TV_I(\Gamma)=\true$ for every text $\Gamma$ in the importation closure of $\corp$ ($\Clo^I(\corp)$) under the title mapping $ttl_I$.
+
+Let a \textbf{structural interpretation} $I$ be a structural pre-interpretation that satisfies the following constraints: for any name $N_i\in V$, $S$ is any finite set of names in $V$, and $\Gamma_i\in\texts$
+\begin{itemize}
+%importations are true
+\item $TV_I(\impOp{N_i}) = \true$. 
+% titlings are true if they match the title mapping
+\item $TV_I(\ttlOp{N_i}{\Gamma_i})=\true$ iff $\ttl_I(N_i)=\Gamma_i$. 
+% domain restriction of importation and titling preserves truth value.
+\item If $\Gamma_i$ is an importation or titling, then $TV_I(\Gamma_i) = TV_I(\domOp{S}{\Gamma_i})$.
+% empty text construction
+\item
+$TV_I(\txtOpone{}) = TV_I(\domOp{S}(\txtOpone{}) = \true$.
+% text construction is conjunctive
+\item $TV_I(\txtOpthree{\Gamma_1}{\ldots}{\Gamma_n})=\wedge_{i=1}^{n}TV_I(\Gamma_i)$, $n\ge 1$.
+% distribution of domain restriction over text construction
+\item $TV_I(\domOp{S}(\txtOpthree{\Gamma_1}{\ldots}{\Gamma_n})) = \wedge_{i=1}^{n}TV_I(\domOp{S}(\Gamma_i))$, $n\ge 1$.
+% commutativity of domain restriction
+\item $TV_I(\domOp{N_1}\circ\domOp{N_2}(\Gamma_i)) = TV_I(\domOp{N_2}\circ\domOp{N_1}(\Gamma_i))$.
+\end{itemize}
+
+We say that $\corp_0$ structurally entails $\corp_1$ ($\corp_0\mdpfstruct\corp_1$) if every structural interpretation that satisfies $\corp_0$ also satisfies $\corp_1$. Structural entailment may be used to define a structural-equivalence relation:
+%we say two corpora are structurally equivalent if each structurally entails the other, and 
+$\corp_0\mdpfstructEquiv\corp_1$ iff $\corp_0\mdpfstruct\corp_1$ and $\corp_1\mdpfstruct\corp_0$.
+A transformation $T(\corp)$ preserves structural semantics if $T(\corp)\mdpfstructEquiv\corp$.
+
+The relevance of this structural semantics to the CL2 semantics is embodied in the following results.
+\begin{theo}
+\label{preinterp}
+For every CL2 interpretation $I$ there is a structural interpretation $\Struc(I)$ that has the same satisfaction relation. That is, $\Sat{I}{\corp}$ iff $\Sat{\Struc(I)}{\corp}$.
+\begin{proof} Given $I$, we may define a structural interpretation $J = \Struc(I)$ having the same title mapping, where for any text $\Gamma\in\texts$, $T_J(\Gamma)=\true$ iff $I(\Gamma)=\true$ and $ArgC(\Gamma)\in UD \cup UD^*$, as defined in \cite{CDv2}. 
+It follows from the CL2 semantics that $J$ satisfies the structural interpretation constraints. 
+\end{proof}
+\end{theo}
+
+\begin{cor}
+\label{preentail}
+If $\corp_1\mdpfstruct\corp_2$, then $\corp\mdpf\corp_2$.
+\end{cor}
+
+\begin{cor}
+\label{preequiv}
+If $\corp_1\mdpfstructEquiv\corp_2$, then $\corp_1\mdpfEquiv\corp_2$,.
+\end{cor}
+
+%The language of CL2 under the structural semantics 
+\noindent In order to demonstrate that the transformations of the importation resolution algorithm preserve (structural) semantics, we will make use of some auxiliary definitions.
+We define the following subsets of $\texts$.
+\begin{itemize}
+%is a text construction containing only a titling statement  with the title being some $N$ and the content some text $\Delta$
+\item $\texts_\ttl = \{
+\text{$\Gamma\in\texts|\Gamma=\ttlOp{N}{\Delta}$ for some $N\in V$, $\Delta\in\texts$}
+\}$.
+%\item $\Gamma \in \texts_\propz$ iff $\Gamma$ is a text construction containing only a sentence or discourse statement (denoted $\txtOp(S)$).
+\item $\texts_\propz = \{
+\text{$\Gamma\in\texts|\Gamma=\txtOpone{E}\}$ for some sentence or discourse statement $E$}
+\}$.
+%\item $\Gamma \in \texts_\prop$ iff $\Gamma$ is in $\texts_\prop0$ or is a domain $N$ restriction applied to a text $\Gamma' \in \texts_\prop$ (denoted $\domOp{N}(\Gamma)$) provided $N > M$ for any domain $M$ restriction in $\Gamma'$.
+\item $\texts_\prop = \{
+\text{ $\Gamma\in\texts|\Gamma=\domOp{S}(\Gamma')$ for some $\Gamma'\in\texts_\propz$ and some finite $S\subseteq V$}
+\}$.
+%\item $\Gamma \in \texts_\impz$ iff $\Gamma$ is an importation.
+\item $\texts_\impz = \{ 
+\text{$\Gamma\in\texts|\Gamma=\impOp{N}$ for some $N\in V$ } 
+\}$.
+%\item $\Gamma \in \texts_\imp$ iff $\Gamma$ is in $\texts_\imp0$ or is a domain $N$ restriction applied to a text $\Gamma'$ in $\texts_\imp$, provided $N > M$ for any domain $M$ restriction in $\Gamma'$.
+\item $\texts_\imp = \{
+\text{ $\Gamma\in\texts|\Gamma=\domOp{S}(\Gamma')$ for some $\Gamma'\in\texts_\impz$ and some finite $S\subseteq V$}
+\}$.
+\end{itemize}
+We define the set of \textbf{elementary texts} $\texts_\elem$ of $\lan$ to be the union of $\texts_\ttl$, $\texts_\prop$ and $\texts_\imp$.
+A \textbf{formal} corpus is a corpus of elementary texts.
+\begin{theo}
+\label{formal}
+For every finite corpus $\corp$ of texts in $\texts$, there is a unique formal corpus $\Formal(\corp)$ that may be derived from $\corp$ by a finite sequence of the following transformations, which preserve structural semantics:
+\begin{itemize}
+\item substitution of the occurrence of a sentence or statement as the argument of a text construction by a text construction containing only that sentence or statement;
+\item replacement of a corpus member that is a text construction with only text arguments by the set (possibly empty) of arguments;
+\item replacement of a corpus member that is a domain restriction of a text construction with only text arguments by the set (possibly empty) of domain restrictions of the arguments.
+\item replacement of a composition of domain restrictions of a text by a permuted composition of the same set of domain restrictions applied to the same text.
+\end{itemize}
+\begin{proof} Briefly, $\corp$ corresponds to a finite forest of finite abstract structural syntax trees, where each non-leaf subtree is a text, while leaves may be sentences, statements, importations or empty text constructions. Each path from a root to a leaf that is not an empty text construction corresponds to a unique elementary text, which together constitute $\Formal(\corp)$. Each transformation above preserves structural semantics, due to the structural interpretation constraints. A finite number of such transformations can be performed for a given finite corpus, terminating in $\Formal(\corp)$. Thus $\Formal(\corp)\mdpfstructEquiv\corp$.
+\end{proof}
+\end{theo}
+
+\noindent The \textbf{closure core} $\Core(\corp)$ of a corpus $\corp$ is the intersection of all of the formal corpora of its importation closures: $\Core(\corp)= \cap_I \Formal(\Clo^I(\corp))$.
+
+\begin{theo}
+\label{core}
+For every corpus $\corp$, $\Core(\corp)\mdpfstructEquiv\corp$, and hence $\Core(\corp)\mdpfEquiv\corp$.
+If $\corp$ is finite, then so is $\Core(\corp)$.
+\end{theo}
+
+\noindent A \textbf{canonical} corpus is a corpus $\corp$ of elementary texts such that 
+%\begin{itemize}
+%\item 
+there is no name $N$ such that $\corp$ contains both an accessible importation of $N$ and a titling of $N$.
+%\item there is at most one titling for each name $N$.
+%\end{itemize}
+For every structurally-satisfiable corpus $\corp\subset\texts$, there is a unique canonical corpus $\Canon(\corp)$ that is obtained by deleting from its closure core $\Core(\corp)$ any accessible $N$ importation if there is an accessible $N$ titling in $\Core(\corp)$. If $\corp\mdpfstruct\bot$, we define $\Canon(\corp) = \texts_\ttl \cup \texts_\prop$.
+
+\begin{theo}
+\label{canon0}
+For every corpus $\corp$, $\Canon(\corp)\mdpfstructEquiv\corp$, and hence $\Canon(\corp)\mdpfEquiv\corp$.
+If $\corp\nmdpfstruct\bot$ is finite, then so is $\Canon(\corp)$.
+\end{theo}
+
+
+\begin{theo}
+\label{canon}
+For any pair $\corp_0$, $\corp_1$ of $\texts$ texts , $\corp_0\mdpfstruct\corp_1$ iff $\Canon(\corp_0) \supseteq \Canon(\corp_1\cup (\Canon(\corp_0)\cap \texts_\ttl))$.
+Further, $\corp_0\mdpfstructEquiv\corp_1$ iff $\Canon(\corp_0) = \Canon(\corp_1)$.
+%\begin{proof} This is not easy to prove.
+%\end{proof}
+\end{theo}
+
+\begin{theo}
+\label{canonalgo}
+The core and canonical corpora of a finite, structurally-satisfiable corpus $\corp$ may be derived by the following algorithm, which preserves structural semantics at each step. Starting with $\corp_0 = \Formal(\corp)$, $\corp^\res_0 = \emptyset$,
+\begin{itemize}
+\item Partition $\corp_n$ into disjoint sets $\corp^\ttl_n$, $\corp^\prop_n$, $\corp^\imp_n$, $\corp^\res_n$, where   $\corp^\ttl_n = \corp_n \cap \texts_\ttl$, $\corp^\prop_n = \corp_n \cap \texts_\prop$, $\corp^\imp_n = \corp_n \cap \texts_\imp - \corp^{res}_n$. 
+\item Select a text $\Gamma_n$ from $\corp^\imp_n$, containing an $N$ importation, such that $\corp^\ttl_n$ contains an $N$ titling. If there is no such text, stop. Substitute the content of the $N$ titling in place of the $N$ importation occurrence to obtain $\Gamma_n'$.
+\item Construct $\corp_{n+1} = \corp_n \cup \Formal(\Gamma'_n)$, $\corp^{res}_{n+1} = \corp^{res}_{n} \cup \{\Gamma_n\}$.
+\end{itemize}
+Repeat until termination at some step $m < \infty$. 
+Then $\Core(\corp) = \corp_m$, and $\Canon(\corp) = \corp_m - \corp^\res_m$.
+%\begin{proof} This is the key result, which needs to be proved by induction.
+%\end{proof}
+\end{theo}
+
+
+\mycomment{ % Not sure these results are needed...
+In the proofs below we make use of the following definitions and Lemmas.
+Define $R_\ttl(\corp)$ for any CL2 corpus $\corp$ to be the corpus of all CL2 texts such that each text in $R_\ttl(\corp)$ is obtained from the substituting, in some text of $\corp$, $\ttl(N)$ in place of one occurrence of an $N$ importation.  That is,
+\begin{equation*}
+R_\ttl\(\corp\) = \{\Gamma|\exists \Gamma' \in\corp \text{ and } \exists k \in\mathbb{N} \text{ such that  } \Sub\(\Gamma', N, k, \ttl\(N\)\)  \}
+\end{equation*}
+where $\Sub(\Gamma_1, N, k, \Gamma_2)$ is the text derived from $\Gamma_1$ by substitution of its $k$-th occurrence (in depth-first traversal) of the $N$ importation by the text $\Gamma_2$.
+
+For an structural interpretation $I$ and corpus $\corp$, define
+\begin{equation*}
+\corp^I = \bigcup_{n=0}^{\infty}R_{\ttl_I}^n(\corp)
+\end{equation*}
+where superscript $n$ indicates $n$ applications of $R_{\ttl_I}$.
+
+\begin{lem} 
+\label{impclosureseries}
+$\corp^I$ is the importation closure of $\corp$ under the title mapping of structural interpretation $I$.
+\begin{proof} It is sufficient to show (a) that $R_{\ttl_I}^n(\corp)$ is a subset of every importation fixed point of $\corp$ for any integer $n\ge0$ and (b) that $\corp^I$ is itself an importation fixed point. 
+
+We prove (a) by induction. Note that $\corp = R_{\ttl_I}^0(\corp)$ is by definition a subset of every importation fixed point of $\corp$ under $\ttl_I$. Assume for some $j\ge 0$ that $R_{\ttl_I}^j(\corp)\subseteq S$ where $S$ is an importation fixed point. Then each text of $R_{\ttl_I}^{j+1}(\corp)$ also belongs to $S$. 
+
+To prove (b), let $\Gamma$ be any text in $\corp^I$. Then there is some $n\ge0$ such that $\Gamma\in R_{\ttl_I}^n(\corp)$. Therefore, any $\Sub(\Gamma, N, k, \ttl_I(N)) \in \corp^I$ as well, and so $\corp^I$ is an importation fixed point.
+\end{proof}
+\end{lem}
+
+\begin{cor}
+\label{replace1}
+Let $\corp_0$ be a CL2 corpus and $\corp_1\subseteq\corp_0$, and further let $\corp^I_n$ be the importation closure under a structural interpretation $I$ of $\corp_n$, $n=$0, 1. Then for any $I$, $\corp^I_1\subseteq\corp^I_0$.
+\begin{proof} It is easily proved by induction that $R^n_I(\corp_1) \subseteq R^n_I(\corp_0)$, and the result follows from Lemma \ref{impclosureseries}.
+\end{proof}
+\end{cor}
+
+\begin{lem}
+\label{replace2}
+If $\TV_I(\Sub(\Lambda_0, N, k, \Gamma)) =$ true, then $\TV_I(\Lambda_0) =$ true.
+\begin{proof}
+This follows from the constraints on the mapping $\TV_I$.
+\end{proof}
+\end{lem}
+}
+
+
+\begin{theo}
+\label{replace}
+Let $\corp_0$ be a corpus containing an accessible $N$ titling with content $\Gamma$. 
+Let $\corp_1$ be the corpus resulting from $\corp_0$ by substituting $\Gamma$ in place of an occurrence of an accessible $N$ importation.
+Then $\corp_0\mdpfstructEquiv\corp_1$, and hence $\corp_0\mdpfEquiv\corp_1$.
+\begin{proof}
+\mycomment{%\ref{canon} has been extended to all corpora, so this is not necessary.
+If $\corp_0\mdpfstruct\bot$, then its formal corpus contains inconsistent titlings, which also belong to $\corp_1$. Therefore $\corp_0\mdpfstruct\bot$, and so $\corp_0\mdpfstructEquiv\corp_1$ and $\corp_0\mdpfEquiv\corp_1$.}
+By Th. \ref{canon}, we have $\Canon(\corp_0) = \Canon(\corp_1)$ and so $\corp_0\mdpfstructEquiv\corp_1$. By Th. \ref{preequiv}, it follows that $\corp_0\mdpfEquiv\corp_1$. 
+\mycomment{ % original proof without using canonical form
+We first show that $\corp_0$ entails $\corp_1$. Let $I$ be a structural interpretation that satisfies $\corp_0$. Then $ttl_I(N)=\Gamma$. Therefore, $\corp_1$ is a subset of the importation closure of $\corp_0$ under $\ttl_I$, and by Lemma \ref{replace1}, $I$ satisfies $\corp_1$.
+
+Next, we show that $\corp_1$ entails $\corp_0$.
+Let $I$ be a structural interpretation that satisfies $\corp_1$.
+Now any accessible titling in $\corp_0$ is also accessible in $\corp_1$, so $ttl_I(N)=\Gamma$.
+Let $\Lambda_0$ be any text in $\corp_0 - \corp_1$. Then for some $m\ge 1$, $\Lambda_1 = \Sub(\Lambda_0, N, m, \Gamma)$ belongs to $\corp_1^I$ and so $\TV_I(\Lambda_1) =$ true. By Lemma \ref{replace2}, then $\TV_I(\Lambda_0)= $ true.}
+\end{proof}  
+\end{theo}
+
+\mycomment{%Not sure if this is still needed...
+\begin{lem}
+\label{delete1}
+$\Gamma$ entails $\Sub(\Gamma, N, k, \txt)$ where $\txt$ is the empty text construction.
+\begin{proof}
+Let $I$ be any structural interpretation.
+Let $\Gamma_1 = \Sub(\Gamma, N, k, \txt)$. Then $\TV_I(\Gamma)= \TV_I(\Gamma_1)$.
+Reversing the substitution by @@@replacing the $\txt$ occurrence with the original importation maps the importation closure of $\Gamma_1^I$ into $\Gamma^I$, with preservation of $\TV_I$.
+Therefore, if $I$ satisfies $\Gamma$ it also satisfies $\Gamma_1$.
+\end{proof}
+\end{lem}
+}
+
+Let $\corp_n$, $n=$0, 1, $\ldots$, be the infinite sequence of corpora obtained by the importation resolution procedure (ignoring the termination criterion) applied to a finite, structurally-satisfiable corpus $\corp_0$.
+\begin{theo}
+\label{termination}
+There exists a non-negative integer $m$ such that $\corp_{m}=\corp_{m+1}$. 
+\begin{proof}
+There are a finite number of titlings, importations and domain restrictions (accessible or not) in the original corpus.
+Hence there will be a finite number of importations that are resolved by substituting titling content.
+Once these substitutions have been exhausted, the only further changes in the corpus will be substituting empty text constructions, which reduce the number of importations in the corpus, and so a fixed point is reached after some finite number of steps.
+\end{proof}
+\end{theo}
+
+\begin{theo}
+\label{resolve}
+$\corp_n$ is structurally, and hence logically, equivalent to $\corp_0$.
+\begin{proof} Consider the sequence $\corphat_n$ where $\corphat_n = \corp_n \cup \mathcal{I}_n$, $\mathcal{I}_0$ is the empty set and $\mathcal{I}_n = \mathcal{I}_{n-1} \cup \{\Gamma_n\}$ where $\Gamma_n$ is the elementary text that is an $N$ importation within the same set of domain restrictions as the importation occurrence that is substituted for at step $n$.
+Then it may be shown by induction that there is a finite subsequence $\corp_{n_j}$,  $j=$0, \ldots, $k$ such that $\Formal(\corphat_{n_j})$ is the same as some sequence obtained by the procedure defined in Th. \ref{canonalgo}. Further, for any integer $i$ such that $n_j \le i < n_{j+1}$ $\Formal(\corphat_i) = \Formal(\corphat_{n_j})$ and for any integer $i \ge n_k$, $\Formal(\corphat_i) = \Formal(\corphat_{n_k}) = \Core(\corp)$.
+\end{proof}
+\end{theo}
+
+
+\begin{cor}
+If $\corp_m = \corp_{m_1}$, then$\Formal(\corp_m) = \Canon(\corp)$.
+\end{cor}
+
+%\begin{thebibliography}{99}
+
+%\bibitem{r1}
+%\textit{Scientific Style and Format: The CBE manual for authors,
+%editors and publishers}. Style Manual Committee, Council of Biology Editors.
+%Sixth ed. Cambridge University Press, 1994.
+
+%\bibitem{r2}
+%L.U. Ante, Cem surgere: Surgite postquam sederitis, qui manducatis panem doloris,
+%\textit{Omnes} \textbf{13} (1916), 114--119.
+
+%\bibitem{r3}
+%T.X. Confortavit, \textit{Seras}, Portarum, New York, 1995.
+
+%\bibitem{r4}
+%P.A. Deus, Ater hoc et filius et mater praestet nobis,
+%\textit{Paterhoc} \textbf{66} (1993), 856--890.
+
+
+\bibliography{refs}
+\bibliographystyle{splncs}
+%\end{thebibliography}
+\end{document}
